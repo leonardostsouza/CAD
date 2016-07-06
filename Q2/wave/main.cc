@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <omp.h>
 
 #include "definitions.h"
 
@@ -46,7 +47,7 @@ void Deallocate3DMatrix(float ***array, Parameters *p)
 		  }
 		  free(array[i]);
 	}
-
+	free(array);
 }
 
 
@@ -54,9 +55,9 @@ void Deallocate3DMatrix(float ***array, Parameters *p)
 // Inicializa as matrizes com os valores iniciais
 void initialize(float*** prev, float*** next, float*** vel, Parameters* p)
 {
-	for (int k = 0; k<p->nz; k++) {
+	for (int i = 0; i<p->nx; i++) {
 		for (int j = 0; j<p->ny; j++) {
-		   for (int i = 0; i<p->nx; i++) {
+		   for (int k = 0; k<p->nz; k++) {
 				prev[i][j][k] = 0.0f;
 				next[i][j][k] = 0.0f;
 				vel[i][j][k]  = 2250000.0f*DT*DT;
@@ -67,9 +68,9 @@ void initialize(float*** prev, float*** next, float*** vel, Parameters* p)
 	// Pulso inicial
 	float val = 1.f;
 	for (int s = 5; s >= 0; s--) {
-		for (int k = p->nz / 2 - s; k<p->nz / 2 + s; k++) {
+		for (int i = p->nx / 2 - s; i<p->nx / 2 + s; i++) {
 			for (int j = p->ny / 2 - s; j<p->ny / 2 + s; j++) {
-				for (int i = p->nx / 2 - s; i<p->nx / 2 + s; i++) {
+				for (int k = p->nz / 2 - s; k<p->nz / 2 + s; k++) {
 					prev[i][j][k] = val;
 				}
 			}
@@ -163,8 +164,7 @@ int main(int argc, char** argv)
 void run_wave_propagation(float ***ptr_next, float ***ptr_prev, float ***ptr_vel, float *coeff, Parameters *p)
 {
 
-
-
+	#pragma opm parallel for private(it) shared(ptr_next, ptr_prev, ptr_vel, coeff, p)
 	for (int it = 0; it<p->n_time_steps; it += 2) {
 
 		iso_3dfd_it(ptr_next, ptr_prev, ptr_vel, coeff, p->nx, p->ny, p->nz);
@@ -183,16 +183,15 @@ void run_wave_propagation(float ***ptr_next, float ***ptr_prev, float ***ptr_vel
 
 void iso_3dfd_it(float ***ptr_next, float ***ptr_prev, float ***ptr_vel, float *coeff, const int n1, const int n2, const int n3)
 {
-	for (int k = 0;k< n3; k++) {
-	   for (int j = 0; j<n2; j++) {
-			for (int i = 0; i<n1; i++)
+	for (int i = HALF_LENGTH; i<n1; i++) {
+	   	for (int j = 0; j<n2; j++) {
+			for (int k = 0; k<n3; k++)
 			{
-
-				if (i >= HALF_LENGTH && i<(n1 - HALF_LENGTH) && j >= HALF_LENGTH && j<(n2 - HALF_LENGTH) && k >= HALF_LENGTH && k<(n3 - HALF_LENGTH))
+				if (i<(n1 - HALF_LENGTH) && j >= HALF_LENGTH && j<(n2 - HALF_LENGTH) && k >= HALF_LENGTH && k<(n3 - HALF_LENGTH))
 				{
-
 					float value = 0.0;
 					value += ptr_prev[i][j][k] * coeff[0];
+					#pragma omp parallel for shared(i, j, k, ptr_next, ptr_prev, ptr_vel, coeff) reduction (+:value)
 					for (int ir = 1; ir <= HALF_LENGTH; ir++) {
 						value += coeff[ir] * (ptr_prev[i+ir][j][k] + ptr_prev[i-ir][j][k]);        // horizontal
 						value += coeff[ir] * (ptr_prev[i][j+ir][k] + ptr_prev[i][j-ir][k]);        // vertical
@@ -202,7 +201,7 @@ void iso_3dfd_it(float ***ptr_next, float ***ptr_prev, float ***ptr_vel, float *
 				}
 			}
 		}
-	}
+	}	
 }
 
 
