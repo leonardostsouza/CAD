@@ -1,5 +1,5 @@
 default:
-	gcc -O2 -fopenmp monte_carlo.c -o mcpi
+	gcc -O -fopenmp monte_carlo.c -o mcpi
 
 tau:
 	tau_cc.sh -O2 -openmp monte_carlo.c -o mcpi

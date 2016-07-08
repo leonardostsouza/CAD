@@ -2,6 +2,7 @@
 
 // useful definitions
 #define RADIUS	0.5
+#define RADIUS_2 0.25
 
 // return number of cicles since start
 uint64_t rdtsc(){

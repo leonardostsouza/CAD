@@ -5,7 +5,7 @@
 int main(int argc, char* argv[])
 {
 	double x, y, z, pi;
-	unsigned int itt, qtt_iter, qtt_threads, countM;
+	unsigned int itt, N, M, qtt_threads;
 
 	//printf("rdtsc: %lu\n",(unsigned long)rdtsc());
 
@@ -17,29 +17,30 @@ int main(int argc, char* argv[])
 	else
 	{
 		// initialize variables
-		qtt_iter = atoi(argv[1]);
+		N = atoi(argv[1]);
 		qtt_threads = atoi(argv[2]);
-		countM = 0;
+		M = 0;
 		srand48(rdtsc());
 
-		#pragma omp parallel for shared(qtt_iter) private(x, y, itt) reduction(+:countM) num_threads(qtt_threads)
-		for(itt = 0; itt < qtt_iter; itt++)
+		#pragma omp parallel for shared(N) private(x, y, itt) reduction(+:M) num_threads(qtt_threads)
+		for(itt = 0; itt < N; itt++)
 		{
 			// generate point
 			x = drand48() - 0.5;
 			y = drand48() - 0.5;
 
 			// check if point is inside circle
-			if (((x*x) + (y*y)) <= (RADIUS*RADIUS))
+			z = (x*x) + (y*y);
+			if (z <= RADIUS_2)
 			{
-				countM++;
+				M++;
 			}
 		}
 
 		// calculate PI
-		pi = (countM/(double)qtt_iter) * 4;
+		pi = (M/(double)N) * 4;
 
-		printf("N = %u, M = %u, PI = %.5f\n", qtt_iter, countM, pi);		
+		printf("N = %u, M = %u, PI = %.5f\n", N, M, pi);		
 	}
 	return 0;
 }
