@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#define LEN  199998 //1048576
-
+//#define LEN  1048576
+#define LEN  2097152
 // return number of cicles since start
 uint64_t rdtsc(){
     unsigned int lo,hi;
@@ -10,7 +10,7 @@ uint64_t rdtsc(){
 }
 
 // execute quicksort
-void quicksort(int numbers[], int left, int right)
+void quicksort(char numbers[], int left, int right)
 {
     int i, j, aux, pivot = left;
 
@@ -31,7 +31,7 @@ void quicksort(int numbers[], int left, int right)
         }  
     }
 
-    #pragma omp parallel firstprivate(pivot)
+    #pragma omp parallel firstprivate(pivot) num_threads(8)
     {
 
     #pragma omp sections 

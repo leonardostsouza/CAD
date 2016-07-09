@@ -3,7 +3,8 @@
 #include "utils.h"
 
 int main(){
-    int numbers[LEN], i;
+    char numbers[LEN];
+    int i;
     //srand48(rdtsc());
     srand48(1234567890123);
     

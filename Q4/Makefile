@@ -7,5 +7,5 @@ tau:
 clean:
 	rm -v qs
 	rm -v profile.*
-	rm -v monte_carlo.pomp.c
+	rm -v quicksort.pomp.c
 	rm -v *.o
