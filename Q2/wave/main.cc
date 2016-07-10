@@ -85,10 +85,10 @@ int main(int argc, char** argv)
 	// Defaults
 	// Malha com 256 x 256 x 256 pontos.
 	Parameters p;
-	p.nx = 256;
-	p.ny = 256;
-	p.nz = 256;
-	p.n_time_steps = 200;
+	p.nx = 64;
+	p.ny = 64;
+	p.nz = 64;
+	p.n_time_steps = 50;
 
 	// Make sure nreps is rouded up to next even number (to support swap)
 	p.n_time_steps = ((p.n_time_steps + 1) / 2) * 2;
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 void run_wave_propagation(float ***ptr_next, float ***ptr_prev, float ***ptr_vel, float *coeff, Parameters *p)
 {
 
-	#pragma opm parallel for private(it) shared(ptr_next, ptr_prev, ptr_vel, coeff, p)
+	//#pragma opm parallel for private(it) shared(ptr_next, ptr_prev, ptr_vel, coeff, p)
 	for (int it = 0; it<p->n_time_steps; it += 2) {
 
 		iso_3dfd_it(ptr_next, ptr_prev, ptr_vel, coeff, p->nx, p->ny, p->nz);

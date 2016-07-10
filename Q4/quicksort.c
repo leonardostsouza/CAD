@@ -8,7 +8,7 @@ int main(){
     //srand48(rdtsc());
     srand48(1234567890123);
     
-    #pragma omp parallel for private(i) shared(numbers)
+    #pragma omp parallel for private(i) shared(numbers) num_threads(8)
     for(i=0; i<LEN; i++)
     {
         numbers[i] = lrand48();
