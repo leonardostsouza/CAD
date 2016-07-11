@@ -1,5 +1,3 @@
-
-
 ## Main config file
 include make.config
 
@@ -15,4 +13,4 @@ all:$(COBJS)
 	$(CONFIG_CC) $(CONFIG_LDFLAGS) $(COBJS) $(CONFIG_LIBS) -o $(CONFIG_EXEC)
 
 clean:
-	$(CONFIG_RM) $(COBJS) $(CONFIG_EXEC) *.o
+	$(CONFIG_RM) $(COBJS) $(CONFIG_EXEC) *.o *.plot *.dat
