@@ -4,6 +4,7 @@
 int main(int argc, char** argv) {
     int partner, myRank, buffer, world_size, proc_rank;
     MPI_Status status;
+    MPI_Request reqSend, reqRecv;
     
     /////////////// INITIALIZATION ///////////////
     MPI_Init(NULL, NULL);
@@ -20,14 +21,16 @@ int main(int argc, char** argv) {
     myRank = proc_rank;
     if (proc_rank < world_size/2){
         partner = proc_rank + world_size/2;
-        MPI_Send( &myRank, 1, MPI_INT, partner, 0, MPI_COMM_WORLD );
-        MPI_Recv( &buffer, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE );
     }
     else {
         partner = proc_rank - world_size/2;
-        MPI_Recv( &buffer, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE );
-        MPI_Send( &myRank, 1, MPI_INT, partner, 0, MPI_COMM_WORLD );
     }
+
+    MPI_Isend( &myRank, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqSend);
+    MPI_Irecv( &buffer, 1, MPI_INT, partner, 0, MPI_COMM_WORLD, &reqRecv);
+
+    MPI_Wait(&reqSend, &status);
+    MPI_Wait(&reqRecv, &status);
 
     printf("Tarefa %d tem parceria com %d, onde %d e o taskid da tarefa"
     " e de seu parceiro\n", proc_rank, partner, buffer);
