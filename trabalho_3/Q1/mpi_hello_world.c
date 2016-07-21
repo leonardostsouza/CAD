@@ -17,5 +17,6 @@ int main(int argc, char** argv) {
     printf("Proccess rank %d sends \"Hello\"!"
     	" There are %d proccesses running\n", 
     	proc_rank, world_size);
+    
     MPI_Finalize();
 }
