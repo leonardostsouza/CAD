@@ -3,12 +3,30 @@
 #include <mpi.h>
 
 #define SIZE 4
+//#define MALLOC
+
+void printMatrix(double** M, int size){
+    int i, j;
+    for (i = 0; i < size; i++){
+        printf("\n");
+        for (j = 0; j < size; j++){
+            printf("%6.2f\t", M[i][j]);
+        }
+    }
+}
 
 int main(int argc, char** argv) {
-    int send_partner, recv_partner, myRank, buffer, world_size, proc_rank, i, j;
+    int send_partner, recv_partner, rows, world_size, proc_rank;
+    int num_rows, rest, offset, i, j, k;
     MPI_Status status;
-    MPI_Request reqSendA[world_size], reqSendB[world_size], reqRecv[world_size];
 
+    #ifdef MALLOC
+        double **A, **B, **C;
+    #else
+        double A[SIZE][SIZE], B[SIZE][SIZE], C[SIZE][SIZE];
+    #endif
+    
+    //MPI_Request reqSendA[world_size], reqSendB[world_size], reqRecv[world_size];
     
     /////////////// INITIALIZATION ///////////////
     MPI_Init(NULL, NULL);
@@ -18,93 +36,97 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
     ///////////// END INITIALIZATION /////////////
 
-    if (proc_rank == 0){
+    #ifdef MALLOC
         // Criar matrizes
-        float *A = malloc(sizeof(float)*(SIZE));
-        float *B = malloc(sizeof(float)*(SIZE));
-        float *C = malloc(sizeof(float)*(SIZE));
+        A = (double**) malloc(sizeof(*A) * SIZE);
+        B = (double**) malloc(sizeof(*B) * SIZE);
+        C = (double**) malloc(sizeof(*C) * SIZE);
 
         for (i = 0; i<SIZE; i++){
-            A[i] = malloc(sizeof(float)*(SIZE));
-            B[i] = malloc(sizeof(float)*(SIZE));
-            C[i] = malloc(sizeof(float)*(SIZE));
+            A[i] = (double*) malloc(sizeof(*A[i]) * SIZE);
+            B[i] = (double*) malloc(sizeof(*A[i]) * SIZE);
+            C[i] = (double*) malloc(sizeof(*A[i]) * SIZE);
         }
+    #endif
 
-        for (i = 0; i<SIZE; i++){
-            A[i] = 1;
-            B[i] = 1;
-        }
-        // transpor B
+    /////////////// MASTER ///////////////
+    if (proc_rank == 0){
 
-        // distribuir
+        printf("Proccess rank %d is MASTER." 
+        " There are %d proccesses running\n", 
+        proc_rank, world_size);
+
+        // Fill matrices
         for (i = 0; i < SIZE; i++){
-            // enviar
-            for(j = 0; j < SIZE; j++){
-                MPI_Isend( &A[i], SIZE, MPI_FLOAT, j%world_size , 0, MPI_COMM_WORLD, &reqSendA[j]);
-                MPI_Isend( &B[j], SIZE, MPI_FLOAT, j%world_size , 0, MPI_COMM_WORLD, &reqSendB[j]);
-            }
-
-            // receber
-            for(j = 0; j < SIZE; j++){
-                MPI_Irecv( &C[i][j], 1, MPI_FLOAT, j%world_size, 0, MPI_COMM_WORLD, &reqRecv[j]);
-            }
-
-            for(j = 0; j < SIZE; j++){
-                MPI_Wait(&reqSendA[j], &status);
-                MPI_Wait(&reqSendB[j], &status);
-                MPI_Wait(&reqRecv[j], &status);
+            for (j = 0; j < SIZE; j++) {
+                A[i][j] = 1;
+                B[i][j] = 1;
             }
         }
-        // imprimir resultado
+
+
+        // Distribute rows
+        num_rows = SIZE/(world_size-1);
+        rest = SIZE%(world_size-1);
+        offset = 0;
+        for (send_partner = 1; send_partner < world_size; send_partner++){
+            rows = (send_partner <= rest) ? num_rows+1 : num_rows;
+            printf("MASTER sending %d rows to process %d (%d to %d)\n", rows, send_partner, offset, offset+rows-1);
+            MPI_Send(&offset, 1, MPI_INT, send_partner, 0, MPI_COMM_WORLD);
+            MPI_Send(&rows, 1, MPI_INT, send_partner, 0, MPI_COMM_WORLD);
+            MPI_Send(&A[offset][0], rows*SIZE, MPI_DOUBLE, send_partner, 0, MPI_COMM_WORLD);
+            MPI_Send(&B, SIZE*SIZE, MPI_DOUBLE, send_partner, 0, MPI_COMM_WORLD);
+            offset = offset + rows;
+        }
+
+        // Receive results
+        for (recv_partner=1; recv_partner < world_size; recv_partner++) {
+            MPI_Recv(&offset, 1, MPI_INT, recv_partner, 0, MPI_COMM_WORLD, &status);
+            MPI_Recv(&rows, 1, MPI_INT, recv_partner, 0, MPI_COMM_WORLD, &status);
+            MPI_Recv(&C[offset][0], rows*SIZE, MPI_DOUBLE, recv_partner, 0, MPI_COMM_WORLD, &status);
+            printf("Proccess %d has finnished\n",recv_partner);
+        }
+        printf("Multiplication DONE! Printing results:\n");
+
+        // Print matrix C
         for (i = 0; i < SIZE; i++){
+            printf("\n");
             for (j = 0; j < SIZE; j++){
-                printf("C[%d][%d] = %.f", i, j, C[i][j]);
+                printf("%6.2f\t", C[i][j]);
             }
         }
+        printf("\n");
     }
+
+    /////////////// WORKER ///////////////
     else {
-        // declarar buffers
-        float *A = malloc(sizeof(float)*(SIZE));
-        float *B = malloc(sizeof(float)*(SIZE));
-        // receber matrizes
+        // Receive Matrices
+        MPI_Recv(&offset, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&A, rows*SIZE, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&B, SIZE*SIZE, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
 
-        for (i = 0; i < SIZE; i++){
-            // enviar
-            for(j = 0; j < SIZE; j++){
-                MPI_Isend( &A[i], SIZE, MPI_FLOAT, j%world_size , 0, MPI_COMM_WORLD, &reqSendA[j]);
-                MPI_Isend( &B[j], SIZE, MPI_FLOAT, j%world_size , 0, MPI_COMM_WORLD, &reqSendB[j]);
-            }
-
-            // receber
-            for(j = 0; j < SIZE; j++){
-                MPI_Irecv( &C[i][j], 1, MPI_FLOAT, j%world_size, 0, MPI_COMM_WORLD, &reqRecv[j]);
-            }
-
-            for(j = 0; j < SIZE; j++){
-                MPI_Wait(&reqSendA[j], &status);
-                MPI_Wait(&reqSendB[j], &status);
-                MPI_Wait(&reqRecv[j], &status);
+        // Compute A*B
+        for (k=0; k<SIZE; k++) {
+            for (i=0; i<rows; i++) {
+                C[i][k] = 0.0;
+                for (j=0; j<SIZE; j++){
+                    C[i][k] += A[i][j] * B[j][k];
+                }
             }
         }
-        // calcular produto
-        // enviar resposta pro mestre
+
+        // Send results to MASTER
+        MPI_Send(&offset, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&C, rows*SIZE, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 
-    for (i = 0; i<SIZE; i++){
-        MPI_Isend( &A[i], 1, MPI_FLOAT, send_partner, 0, MPI_COMM_WORLD, &reqSend);
-        MPI_Irecv( &B[i], 1, MPI_FLOAT, recv_partner, 0, MPI_COMM_WORLD, &reqRecv);
-
-        MPI_Wait(&reqSend, &status);
-        MPI_Wait(&reqRecv, &status);
-    }
-
-
-    printf(" %d -> %d -> %d. Recebeu: %.f"
-    " \n", recv_partner, proc_rank, send_partner, B[0]);
-
-    free(A);
-    free(B);
-    free(C);
+    #ifdef MALLOC
+        free(A);
+        free(B);
+        free(C);
+    #endif
     MPI_Finalize();
 }
 
