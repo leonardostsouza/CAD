@@ -4,5 +4,5 @@ default:
 run: 
 	mpirun -n 4 run
 
-clean
+clean:
 	rm -v run

@@ -12,9 +12,12 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
     ///////////// END INITIALIZATION /////////////
 
-    printf("Proccess rank %d sends \"Hello\"!"
-    	" There are %d proccesses running\n", 
-    	proc_rank, world_size);
+    printf("Proccess rank %d sends \"Hello\"! \n", proc_rank);
     
+    //Processo mestre
+    if (proc_rank == 0){
+        printf("There are %d proccesses running\n", world_size);
+    }
+
     MPI_Finalize();
 }
