@@ -123,6 +123,11 @@ int main(int argc, char** argv) {
     }
 
     #ifdef MALLOC
+    	for (i = 0; i < SIZE; i++){
+    		free(A[i]);
+    		free(B[i]);
+    		free(C[i]);
+    	}
         free(A);
         free(B);
         free(C);
