@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#define SIZE 10000
+#define SIZE 100000000
 
 int main(int argc, char** argv) {
     int send_partner, recv_partner, myRank, buffer, world_size, proc_rank;
@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
         A[i] = proc_rank;
     }
 
+    ///////////// DEFINE PARTNER /////////////
     send_partner = proc_rank +1;
     recv_partner = proc_rank -1;
     if (proc_rank == 0){
@@ -32,6 +33,7 @@ int main(int argc, char** argv) {
     else if (proc_rank == (world_size-1)){
         send_partner = 0;
     }
+    /////////// END DEFINE PARTNER ///////////
 
     for (i = 0; i<SIZE; i++){
         MPI_Isend( &A[i], 1, MPI_FLOAT, send_partner, 0, MPI_COMM_WORLD, &reqSend);
