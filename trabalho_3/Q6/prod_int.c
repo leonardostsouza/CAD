@@ -4,24 +4,12 @@
 
 #define SIZE 100000
 
-void printMatrix(double** M, int size){
-    int i, j;
-    for (i = 0; i < size; i++){
-        printf("\n");
-        for (j = 0; j < size; j++){
-            printf("%6.2f\t", M[i][j]);
-        }
-    }
-}
-
 int main(int argc, char** argv) {
     int send_partner, recv_partner, values, world_size, proc_rank;
     int num_values, rest, offset, i, j, k;
     MPI_Status status;
     
     double A[SIZE], B[SIZE], sum, temp_sum;
-    
-    //MPI_Request reqSendA[world_size], reqSendB[world_size], reqRecv[world_size];
     
     /////////////// INITIALIZATION ///////////////
     MPI_Init(NULL, NULL);
@@ -71,7 +59,6 @@ int main(int argc, char** argv) {
         }
 
         printf("\nInner Product DONE! SUM = %6.2f\n", sum);
-
     }
 
     /////////////// WORKER ///////////////
@@ -92,7 +79,7 @@ int main(int argc, char** argv) {
         MPI_Send(&offset, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
         MPI_Send(&values, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
         MPI_Send(&temp_sum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-    }
+    } 
 
     MPI_Finalize();
 }

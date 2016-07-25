@@ -5,16 +5,6 @@
 #define SIZE 500
 //#define MALLOC
 
-void printMatrix(double** M, int size){
-    int i, j;
-    for (i = 0; i < size; i++){
-        printf("\n");
-        for (j = 0; j < size; j++){
-            printf("%6.2f\t", M[i][j]);
-        }
-    }
-}
-
 int main(int argc, char** argv) {
     int send_partner, recv_partner, rows, world_size, proc_rank;
     int num_rows, rest, offset, i, j, k;
@@ -123,6 +113,12 @@ int main(int argc, char** argv) {
     }
 
     #ifdef MALLOC
+        for (int i = 0; i < SIZE; i++)
+        {
+            free(A[i]);
+            free(B[i]);
+            free(C[i]);
+        }
         free(A);
         free(B);
         free(C);

@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
     printf(" %d -> %d -> %d. SOMA: %.f\n", recv_partner, proc_rank, send_partner, sum);
 
     MPI_Finalize();
+    return 0;
 }
 
 

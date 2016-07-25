@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
     " e de seu parceiro\n", proc_rank, partner, buffer);
 
     MPI_Finalize();
+    return 0;
 }
 
 
